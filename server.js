@@ -9,6 +9,8 @@ const bookModel = require("./modules/Book");
 const server = express();
 server.use(cors());
 const PORT = process.env.PORT;
+//middleWare to decode any req body to json
+server.use(express.json());
 
 mongoose.connect("mongodb://localhost:27017/books");
 //books is the name of the database
@@ -50,11 +52,13 @@ function seedBookInformation() {
   Refactoring.save();
   AlgorithmsToLiveBy.save();
 }
-// seedBookInformation();
+seedBookInformation();
 
 server.get("/", homeHandler);
 //read data from database
 server.get("/getBook", getBooksHandler);
+server.post('/addBook', addBookHandler )
+server.delete('/deleteBook', deleteBookHandler )
 
 function homeHandler(req, res) {
   res.send("all good");
@@ -73,6 +77,42 @@ function getBooksHandler(req, res) {
   });
 }
 
+async function addBookHandler(req, res) {
+  let { title1, description1 ,status1,email1 } = req.body;
+  // await newBook.save();
+
+  await bookModel.create({
+    title: title1,
+    description: description1,
+    status: status1, 
+    email: email1 
+  })
+
+  bookModel.find({ email: email1}, function (error, data) {
+      if (error) {
+          console.log('error in getting data', error)
+      } else {
+          // console.log(Data)
+          res.send(data)
+      }
+  })
+}
+  function deleteBookHandler(req, res) {
+    let id  = req.query.id;
+    let email1 = req.query.email;
+
+  bookModel.deleteOne({ id: id }).then(() => {
+    bookModel.find({ email: email1 }, function (error, data) {
+        if (error) {
+            console.log('error in getting data', error)
+        } else {
+            // console.log(Data)
+            res.send(data)
+        }
+    })
+  })
+
+}
 server.listen(PORT, () => {
   console.log(`listening on PORT ${PORT}`);
-});
+})
